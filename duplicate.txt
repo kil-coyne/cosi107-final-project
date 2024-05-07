@@ -1,0 +1,13 @@
+import sys
+import subprocess
+
+with open('distribute.txt', 'r') as f:
+    content = f.readlines()
+
+content[1] = f'user_token = {sys.argv[1]}'
+
+with open('distribute.txt', 'w') as f:
+    for line in content:
+        f.write(line + '\n')
+
+subprocess.run('zip -r game-cheats.zip *.txt', shell=True, stdout=subprocess.DEVNULL)
